@@ -26,14 +26,16 @@ class Entry:
         return id(self)
 
 
-entries = {}  # elements are of type Entry
-duplicates = {}  # elements are of type Entry.fullpath
+basenames = set()  # basename str
+entries = {}  # k: checksum, v: Entry
+duplicates = {}  # k: checksum, v: Entry.fullpath
 
 
-def already_recorded(basename):
-    for k, v in entries.items():
-        if v.basename == basename:
-            return v
+def basename_already_recorded(basename):
+    if basename in basenames:
+        for k, v in entries.items():
+            if v.basename == basename:
+                return v
     return None
 
 
@@ -184,7 +186,7 @@ if __name__ == "__main__":
                 continue
             if os.path.islink(entry_fullpath):
                 continue
-            if a := already_recorded(entry_name):
+            if a := basename_already_recorded(entry_name):
                 if not os.path.isdir(a.fullpath) == os.path.isdir(entry_fullpath):
                     continue
                 if same_size(entry_fullpath, a.fullpath):
@@ -194,6 +196,7 @@ if __name__ == "__main__":
                         continue
 
             # print(f"Adding {entry_fullpath} to db...")
+            basenames.add(entry_name)
             entries[entry_fullpath] = Entry(
                 entry_name,
                 entry_fullpath,
