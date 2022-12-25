@@ -44,15 +44,14 @@ def remove(entry):
         del entries[entry]
 
 
-def record_duplicates(a, b):
-    if a not in entries:
+def record_duplicates(a, b, checksum):
+    if a not in entries and b not in entries:
         print("!Big problem!")
         return
-    md5 = entries[a].md5sum
-    if md5 not in duplicates:
-        duplicates[md5] = {a, b}
+    if checksum not in duplicates:
+        duplicates[checksum] = {a, b}
     else:
-        duplicates[md5] |= {a, b}
+        duplicates[checksum] |= {a, b}
 
 
 def same_size(a, b):
@@ -76,7 +75,7 @@ def same_checksum(a, b):
 
 def get_dir_size(path = '.'):
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(path):
+    for dirpath, dirnames, filenames in os.walk(path, followlinks=False):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             # skip if it is symbolic link
@@ -148,24 +147,33 @@ def same_file_checksum(a, b):
         # print(f"Computing md5sum for {b}...")
         b_sum = hashlib.md5(open(b,'rb').read()).hexdigest()
         entries[b].md5sum = b_sum
-    return entries[a].md5sum == entries[b].md5sum
+    if entries[a].md5sum == entries[b].md5sum:
+        return entries[a].md5sum
+    else:
+        return False
 
 
 if __name__ == "__main__":
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(".", followlinks=False):
         for entry_name in dirs + files:
             entry_fullpath = os.path.join(root, entry_name)
-            # if "/.git/ref" not in entry_fullpath:
-            #     continue
-            # print(entry_fullpath)
+            if entry_name.startswith("."):
+                continue
+            if ".Spotlight" in entry_fullpath:
+                continue
+            if ".git/" in entry_fullpath:
+                continue
+             # skip if it is symbolic link
+            if os.path.islink(entry_fullpath):
+                continue
             if a := already_recorded(entry_name):
                 # print(f"{entry_fullpath}: filename already met at {a.fullpath}")
                 if same_size(entry_fullpath, a.fullpath):
-                    print(f"{entry_fullpath} has same size as {a.fullpath}")
-                    if same_checksum(entry_fullpath, a.fullpath):
+                    # print(f"{entry_fullpath} has same size as {a.fullpath}")
+                    if checksum := same_checksum(entry_fullpath, a.fullpath):
                         print(f"{entry_fullpath} is identical to {a.fullpath}")
                         # remove(entry_fullpath)
-                        record_duplicates(entry_fullpath, a.fullpath)
+                        record_duplicates(a.fullpath, entry_fullpath, checksum)
                         continue
                 # print(f"  > not the same file, recording...")
 
@@ -178,4 +186,4 @@ if __name__ == "__main__":
     # print("--- Entries ---")
     # print("\n".join(str(e) for k, e in entries.items()))
     print("--- Duplicates ---")
-    print("\n".join(str(e) for k, e in duplicates.items()))
+    print("\n".join(f"{k}: {sorted(e)}" for k, e in sorted(duplicates.items()) if e))
