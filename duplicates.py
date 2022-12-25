@@ -22,7 +22,6 @@ class Entry:
         return f"{self.fullpath}{metadata_txt if metadata else ''}"
 
     def __hash__(self):
-        # return hash(tuple(self))
         return id(self)
 
 
@@ -40,7 +39,7 @@ def already_recorded(basename):
 def remove(entry):
     print(f"Removing {entry} from disk...")
     if entry in entries:
-        print(f"Removing {entry} from database...")  # Should not be in DB
+        print(f"Removing {entry} from database...")
         del entries[entry]
 
 
@@ -53,7 +52,7 @@ def record_duplicates(a, b, checksum):
     else:
         duplicates[checksum] |= {a, b}
 
-    # Remove the entry if it is part of a greater duplicate
+    # Remove either entry from duplucates if they are part of a greater duplicate
     for checksum_a, pa in [(checksum, a), (checksum, b)]:
         to_delete = []  # Postpone deletion to prevent deleting while iterating
         for checksum_b, paths_b in duplicates.items():
@@ -69,7 +68,7 @@ def record_duplicates(a, b, checksum):
                 else:
                     continue
                 to_delete.append((deeper_path, deeper_checksum, other_path))
-        # Remove redundant entries
+        # Perform deletion of redundant entries
         for deeper_path, deeper_checksum, other_path in to_delete:
             print(deeper_path, "included in", other_path, "and will be optimized out")
             duplicates[deeper_checksum].remove(deeper_path)
@@ -97,26 +96,23 @@ def same_checksum(a, b):
 def get_dir_size(path = '.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(path, followlinks=False):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            # skip if it is symbolic link
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
-    # print(">>", path, total_size)
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            if not os.path.islink(filepath):
+                total_size += os.path.getsize(filepath)
     return total_size
 
 
 def same_dir_size(a, b):
+    # TODO: store dir size in 'entries'
     return get_dir_size(a) == get_dir_size(b)
 
 
 def same_file_size(a, b):
     if a not in entries:
-        # print(f"Adding {a} to db...")
         entries[a] = Entry(a, os.path.basename(a))
     entries[a].size = os.path.getsize(a)
     if b not in entries:
-        # print(f"Adding {b} to db...")
         entries[b] = Entry(b, os.path.basename(b))        
     entries[b].size = os.path.getsize(b)
     return entries[a].size == entries[b].size
@@ -127,7 +123,6 @@ def get_dir_checksums(path):
     for dirpath, dirnames, filenames in os.walk(path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
-            # skip if it is symbolic link
             if not os.path.islink(fp):
                 md5sums.add((fp, hashlib.md5(open(fp,'rb').read()).hexdigest()))
     return md5sums
@@ -142,9 +137,8 @@ def same_dir_checksum(a, b):
         if os.path.basename(pa) != os.path.basename(pb):
             return False
         match = SequenceMatcher(None, pa, pb).find_longest_match()
-        # TODO: prevent matching partial words!
+        # TODO: prevent from matching partial words!
         common_path = pa[match.a:match.a + match.size].lstrip("/")
-        # print(common_path)
         unique_entries_a.add((common_path, checksum_a))
         unique_entries_b.add((common_path, checksum_b))
     if unique_entries_a == unique_entries_b:
@@ -181,28 +175,23 @@ if __name__ == "__main__":
             if entry_name.startswith("."):
                 continue
             if ".Spotlight" in entry_fullpath:
-                continue
+                continue  # For testing purposes only
             if ".git/" in entry_fullpath:
                 continue
-             # skip if it is symbolic link
             if os.path.islink(entry_fullpath):
                 continue
             if a := already_recorded(entry_name):
-                # print(f"{entry_fullpath}: filename already met at {a.fullpath}")
                 if same_size(entry_fullpath, a.fullpath):
-                    # print(f"{entry_fullpath} has same size as {a.fullpath}")
                     if checksum := same_checksum(entry_fullpath, a.fullpath):
                         print(f"{entry_fullpath} is identical to {a.fullpath}")
-                        # remove(entry_fullpath)
                         record_duplicates(a.fullpath, entry_fullpath, checksum)
                         continue
-                # print(f"  > not the same file, recording...")
 
             # print(f"Adding {entry_fullpath} to db...")
             entries[entry_fullpath] = Entry(
                 entry_name,
                 entry_fullpath,
-                is_dir=os.path.isdir(entry_fullpath))  # do not compute anything at this time
+                is_dir=os.path.isdir(entry_fullpath))
 
     # print("--- Entries ---")
     # print("\n".join(str(e) for k, e in entries.items()))
