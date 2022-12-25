@@ -10,13 +10,13 @@ class Entry:
     """Class for keeping track of a filesystem entry."""
     basename: str
     fullpath: str  # path (either absolute or relative) including basename
-    md5sum: str = ""
+    checksum: str = ""  # md5
     size: int = -1
     is_dir: bool = False
 
     def __repr__(self) -> str:
         size_txt = f"{self.size} bytes" if self.size != -1 else ""
-        md5_txt = f"{self.md5sum}" if self.md5sum else ""
+        md5_txt = f"{self.checksum}" if self.checksum else ""
         isdir_txt = "directory" if self.is_dir else ""
         metadata = [d for d in [size_txt, md5_txt, isdir_txt] if d]
         metadata_txt = " (" + ", ".join(metadata) + ")"
@@ -126,10 +126,16 @@ def same_file_size(a, b):
 def get_dir_checksums(path):
     md5sums = set()
     for dirpath, dirnames, filenames in os.walk(path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            if not os.path.islink(fp):
-                md5sums.add((fp, hashlib.md5(open(fp,'rb').read()).hexdigest()))
+        for filename in filenames:
+            fullpath = os.path.join(dirpath, filename)
+            if os.path.islink(fullpath):
+                continue
+            if not fullpath in entries:
+                entries[fullpath] = Entry(filename, fullpath)
+            if not entries[fullpath].checksum:
+                checksum = hashlib.md5(open(fullpath,'rb').read()).hexdigest()
+                entries[fullpath].checksum = checksum
+            md5sums.add((fullpath, entries[fullpath].checksum))
     return md5sums
 
 
@@ -157,18 +163,19 @@ def same_dir_checksum(a, b):
 def same_file_checksum(a, b):
     if a not in entries:
         entries[a] = Entry(a, os.path.basename(a))
-    elif not entries[a].md5sum:
+    elif not entries[a].checksum:
         # print(f"Computing md5sum for {a}...")
         a_sum = hashlib.md5(open(a,'rb').read()).hexdigest()
-        entries[a].md5sum = a_sum
+        entries[a].checksum = a_sum
     if b not in entries:
         entries[b] = Entry(b, os.path.basename(b))        
-    elif not entries[b].md5sum:
+    elif not entries[b].checksum:
         # print(f"Computing md5sum for {b}...")
         b_sum = hashlib.md5(open(b,'rb').read()).hexdigest()
-        entries[b].md5sum = b_sum
-    if entries[a].md5sum == entries[b].md5sum:
-        return entries[a].md5sum
+        entries[b].checksum = b_sum
+
+    if entries[a].checksum == entries[b].checksum:
+        return entries[a].checksum
     else:
         return False
 
