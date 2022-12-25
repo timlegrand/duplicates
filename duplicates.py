@@ -26,17 +26,14 @@ class Entry:
         return id(self)
 
 
-basenames = set()  # basename str
+fullpaths = {}  # k: basename, v: fullpath
 entries = {}  # k: checksum, v: Entry
 duplicates = {}  # k: checksum, v: Entry.fullpath
 
 
 def basename_already_recorded(basename):
-    if basename in basenames:
-        for k, v in entries.items():
-            if v.basename == basename:
-                return v
-    return None
+    if basename in fullpaths:
+        return entries.get(fullpaths[basename], None)
 
 
 def remove(entry):
@@ -203,7 +200,7 @@ if __name__ == "__main__":
                         continue
 
             # print(f"Adding {entry_fullpath} to db...")
-            basenames.add(entry_name)
+            fullpaths[entry_name] = entry_fullpath
             entries[entry_fullpath] = Entry(
                 entry_name,
                 entry_fullpath,
