@@ -77,22 +77,23 @@ def record_duplicates(a, b, checksum):
 
 
 def same_size(a, b):
-    if os.path.isdir(a) and os.path.isdir(b):
+    """a and b are fully qualified paths and have same type"""
+    if os.path.isdir(a):
         return same_dir_size(a, b)
-    elif os.path.isfile(a) and os.path.isfile(b):
+    elif os.path.isfile(a):
        return same_file_size(a, b)
     else:
-        raise AttributeError("Arguments should be of same type, either folder or file")
+        raise AttributeError("Arguments should be either folder or file")
 
 
 def same_checksum(a, b):
-    """a and b are fully qualified paths"""
-    if os.path.isdir(a) and os.path.isdir(b):
+    """a and b are fully qualified paths and have same type"""
+    if os.path.isdir(a):
         return same_dir_checksum(a, b)
-    elif os.path.isfile(a) and os.path.isfile(b):
+    elif os.path.isfile(a):
         return same_file_checksum(a, b)
     else:
-        raise AttributeError("Arguments should be of same type, either folder or file")
+        raise AttributeError("Arguments should be either folder or file")
 
 
 def get_dir_size(path = '.'):
@@ -177,13 +178,15 @@ if __name__ == "__main__":
             entry_fullpath = os.path.join(root, entry_name)
             if entry_name.startswith("."):
                 continue
-            if ".Spotlight" in entry_fullpath:
+            if any(i in entry_fullpath for i in [".Spotlight", ".pyi"]):
                 continue  # For testing purposes only
             if ".git/" in entry_fullpath:
                 continue
             if os.path.islink(entry_fullpath):
                 continue
             if a := already_recorded(entry_name):
+                if not os.path.isdir(a.fullpath) == os.path.isdir(entry_fullpath):
+                    continue
                 if same_size(entry_fullpath, a.fullpath):
                     if checksum := same_checksum(entry_fullpath, a.fullpath):
                         print(f"{entry_fullpath} is identical to {a.fullpath}")
