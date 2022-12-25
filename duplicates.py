@@ -72,7 +72,8 @@ def record_duplicates(a, b, checksum):
         # Perform deletion of redundant entries
         for deeper_path, deeper_checksum, other_path in to_delete:
             print(deeper_path, "included in", other_path, "and will be optimized out")
-            duplicates[deeper_checksum].remove(deeper_path)
+            if deeper_path in duplicates[deeper_checksum]:
+                duplicates[deeper_checksum].remove(deeper_path)
 
 
 def same_size(a, b):
