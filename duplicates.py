@@ -53,6 +53,27 @@ def record_duplicates(a, b, checksum):
     else:
         duplicates[checksum] |= {a, b}
 
+    # Remove the entry if it is part of a greater duplicate
+    for checksum_a, pa in [(checksum, a), (checksum, b)]:
+        to_delete = []  # Postpone deletion to prevent deleting while iterating
+        for checksum_b, paths_b in duplicates.items():
+            for pb in paths_b:
+                if pa == pb:
+                    continue
+                if pa.startswith(pb):
+                    deeper_path, other_path = pa, pb
+                    deeper_checksum = checksum_a
+                elif pb.startswith(pa):
+                    deeper_path, other_path = pb, pa
+                    deeper_checksum = checksum_b
+                else:
+                    continue
+                to_delete.append((deeper_path, deeper_checksum, other_path))
+        # Remove redundant entries
+        for deeper_path, deeper_checksum, other_path in to_delete:
+            print(deeper_path, "included in", other_path, "and will be optimized out")
+            duplicates[deeper_checksum].remove(deeper_path)
+
 
 def same_size(a, b):
     if os.path.isdir(a) and os.path.isdir(b):
