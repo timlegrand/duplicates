@@ -68,7 +68,7 @@ def same_checksum(a, b):
     """a and b are fully qualified paths"""
     if os.path.isdir(a) and os.path.isdir(b):
         return same_dir_checksum(a, b)
-    if os.path.isfile(a) or os.path.isfile(b):
+    elif os.path.isfile(a) and os.path.isfile(b):
         return same_file_checksum(a, b)
     else:
         raise AttributeError("Arguments should be of same type, either folder or file")
