@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 import hashlib
 import os
 
@@ -101,7 +102,7 @@ def same_file_size(a, b):
     return entries[a].size == entries[b].size
 
 
-def get_dir_checksum(path = '.'):
+def get_dir_checksums(path):
     md5sums = set()
     for dirpath, dirnames, filenames in os.walk(path):
         for f in filenames:
@@ -113,15 +114,25 @@ def get_dir_checksum(path = '.'):
 
 
 def same_dir_checksum(a, b):
-    ma = get_dir_checksum(a)
-    # print(a)
-    # for p, m in ma:
-        # print(">>", p, m)
-    mb = get_dir_checksum(b)
-    # print(b)
-    # for p, m in mb:
-        # print(">>", p, m)
-    return ma == mb
+    entries_a = sorted(get_dir_checksums(a))
+    entries_b = sorted(get_dir_checksums(b))
+    unique_entries_a = set()
+    unique_entries_b = set()
+    for (pa, checksum_a), (pb, checksum_b) in zip(entries_a, entries_b):
+        if os.path.basename(pa) != os.path.basename(pb):
+            return False
+        match = SequenceMatcher(None, pa, pb).find_longest_match()
+        # TODO: prevent matching partial words!
+        common_path = pa[match.a:match.a + match.size].lstrip("/")
+        # print(common_path)
+        unique_entries_a.add((common_path, checksum_a))
+        unique_entries_b.add((common_path, checksum_b))
+    if unique_entries_a == unique_entries_b:
+        dir_sums = "".join([i for entry in sorted(unique_entries_a) for i in entry])
+        dir_sum = hashlib.md5(dir_sums.encode()).hexdigest()
+        return dir_sum
+    else:
+        return False
 
 
 def same_file_checksum(a, b):
