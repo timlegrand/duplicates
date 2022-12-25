@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 import hashlib
 import os
+import sys
 
 
 @dataclass
@@ -169,7 +170,8 @@ def same_file_checksum(a, b):
 
 
 if __name__ == "__main__":
-    for root, dirs, files in os.walk(".", followlinks=False):
+    path = sys.argv[1] if len(sys.argv) == 2 else "."
+    for root, dirs, files in os.walk(path, followlinks=False):
         for entry_name in dirs + files:
             entry_fullpath = os.path.join(root, entry_name)
             if entry_name.startswith("."):
