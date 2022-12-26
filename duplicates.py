@@ -161,13 +161,13 @@ def same_file_checksum(a, b):
     if a not in entries:
         entries[a] = Entry(a, os.path.basename(a))
     elif not entries[a].checksum:
-        logging.debug(f"Computing md5sum for {a}...")
+        logging.debug(f"Computing checksum for {a}...")
         a_sum = hashlib.md5(open(a,'rb').read()).hexdigest()
         entries[a].checksum = a_sum
     if b not in entries:
         entries[b] = Entry(b, os.path.basename(b))        
     elif not entries[b].checksum:
-        logging.debug(f"Computing md5sum for {b}...")
+        logging.debug(f"Computing checksum for {b}...")
         b_sum = hashlib.md5(open(b,'rb').read()).hexdigest()
         entries[b].checksum = b_sum
 
@@ -200,7 +200,7 @@ if __name__ == "__main__":
                         record_duplicates(a.fullpath, entry_fullpath, checksum)
                         continue
 
-            logging.debug(f"Adding {entry_fullpath} to db...")
+            logging.debug(f"New entry: {entry_fullpath}")
             fullpaths[entry_name] = entry_fullpath
             entries[entry_fullpath] = Entry(
                 entry_name,
