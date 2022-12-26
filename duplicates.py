@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 import hashlib
+import logging
 import os
 import sys
 
@@ -37,16 +38,15 @@ def basename_already_recorded(basename):
 
 
 def remove(entry):
-    print(f"Removing {entry} from disk...")
+    logging.info(f"Removing {entry} from disk...")
     if entry in entries:
-        print(f"Removing {entry} from database...")
+        logging.info(f"Removing {entry} from database...")
         del entries[entry]
 
 
 def record_duplicates(a, b, checksum):
     if a not in entries and b not in entries:
-        print("!Big problem!")
-        return
+        raise Exception("At this point both entries should be stored in 'entries'")
     if checksum not in duplicates:
         duplicates[checksum] = {a, b}
     else:
@@ -70,7 +70,7 @@ def record_duplicates(a, b, checksum):
                 to_delete.append((deeper_path, deeper_checksum, other_path))
         # Perform deletion of redundant entries
         for deeper_path, deeper_checksum, other_path in to_delete:
-            print(deeper_path, "included in", other_path, "and will be optimized out")
+            logging.info(f"{deeper_path} included in {other_path} and will be optimized out")
             if deeper_path in duplicates[deeper_checksum]:
                 duplicates[deeper_checksum].remove(deeper_path)
 
@@ -161,13 +161,13 @@ def same_file_checksum(a, b):
     if a not in entries:
         entries[a] = Entry(a, os.path.basename(a))
     elif not entries[a].checksum:
-        # print(f"Computing md5sum for {a}...")
+        logging.debug(f"Computing md5sum for {a}...")
         a_sum = hashlib.md5(open(a,'rb').read()).hexdigest()
         entries[a].checksum = a_sum
     if b not in entries:
         entries[b] = Entry(b, os.path.basename(b))        
     elif not entries[b].checksum:
-        # print(f"Computing md5sum for {b}...")
+        logging.debug(f"Computing md5sum for {b}...")
         b_sum = hashlib.md5(open(b,'rb').read()).hexdigest()
         entries[b].checksum = b_sum
 
@@ -178,13 +178,14 @@ def same_file_checksum(a, b):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.DEBUG)
     path = sys.argv[1] if len(sys.argv) == 2 else "."
     for root, dirs, files in os.walk(path, followlinks=False):
         for entry_name in dirs + files:
             entry_fullpath = os.path.join(root, entry_name)
             if entry_name.startswith("."):
                 continue
-            if any(i in entry_fullpath for i in [".Spotlight", ".pyi"]):
+            if any(i in entry_fullpath for i in [".Spotlight", ".pyi", "Tim/dev/", "Films", "Musique", "Photos", "Jeux", "mi8", "Camera Roll"]):
                 continue  # For testing purposes only
             if ".git/" in entry_fullpath:
                 continue
@@ -195,18 +196,16 @@ if __name__ == "__main__":
                     continue
                 if same_size(entry_fullpath, a.fullpath):
                     if checksum := same_checksum(entry_fullpath, a.fullpath):
-                        print(f"{entry_fullpath} is identical to {a.fullpath}")
+                        logging.info(f"{entry_fullpath} is identical to {a.fullpath}")
                         record_duplicates(a.fullpath, entry_fullpath, checksum)
                         continue
 
-            # print(f"Adding {entry_fullpath} to db...")
+            logging.debug(f"Adding {entry_fullpath} to db...")
             fullpaths[entry_name] = entry_fullpath
             entries[entry_fullpath] = Entry(
                 entry_name,
                 entry_fullpath,
                 is_dir=os.path.isdir(entry_fullpath))
 
-    # print("--- Entries ---")
-    # print("\n".join(str(e) for k, e in entries.items()))
     print("--- Duplicates ---")
     print("\n".join(f"{k}: {sorted(e)}" for k, e in sorted(duplicates.items()) if e))
