@@ -31,7 +31,7 @@ Pull Requests
 
 Please consider the following before creating a pull-request:
 
-- follow the coding conventions; applying ``black --check`` on *your* code is
+- follow the coding conventions; applying ``black --check`` on the new code is
   usually enough
 - create standalone, minimal commits with an explicit message; take a look at
   existing commits to get an idea of how to write your commit message
@@ -41,6 +41,13 @@ Please consider the following before creating a pull-request:
 Dev env
 -------
 
+tldr;
+^^^^^
+
+.. code-block:: bash
+
+    pipx install -e .
+
 Even if not mandatory, I strongly recommend to insulate your development
 environment into a ``virtualenv``. It will ensure that **all and only** the
 needed requirements will be available to your program (no more *works for me*), 
@@ -48,19 +55,30 @@ and prevent incompatibility issues between multiple versions of other Python
 packages.
 
 I personnally use ``virtualenv`` and ``virtualenvwrapper`` to ease my venv 
-management.
-If you don’t have ``virtualenv`` installed already, here is how I used to set it
+management. One can also use ``pipx``, though I don't know how it will be able
+to manage the dependencies declared in the ``requirements.txt`` file in the
+future.
+
+install
+^^^^^^^
+
+If you want to give ``virtualenvwrapper`` a chance, here is how I used to set it
 up:
 
 .. code-block:: bash
 
-    sudo pip install -U virtualenv
-    sudo pip install -U virtualenvwrapper
+    pip install -U pip virtualenv virtualenvwrapper
+
+Then add to your ``.bashrc`` file::
+
     export WORKON_HOME=~/.virtualenvs
     mkdir -p $WORKON_HOME
-    source /usr/local/bin/virtualenvwrapper.sh
+    source $HOME/.local/bin/virtualenvwrapper.sh
 
-To set up your dev env:
+usage
+^^^^^
+
+To set up your dev env (first time only):
 
 .. code-block:: bash
 
@@ -125,3 +143,4 @@ Recommended listening while developing: `alt-J - An Awesome Wave`_
 
 .. _LICENSE file: ./LICENSE
 .. _TODO list: ./TODO.rst
+.. _alt-J - An Awesome Wave: https://en.wikipedia.org/wiki/An_Awesome_Wave
