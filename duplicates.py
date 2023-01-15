@@ -1,9 +1,12 @@
+import argparse
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 import hashlib
 import logging
 import os
 import sys
+
+from _version import __version_text__
 
 
 @dataclass
@@ -178,6 +181,9 @@ def same_file_checksum(a, b):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="""Browse a directory tree and search for duplicates.""")
+    parser.add_argument('-v', '--version', action='version', version=__version_text__)
+    options = parser.parse_args()
     logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.DEBUG)
     path = sys.argv[1] if len(sys.argv) == 2 else "."
     for root, dirs, files in os.walk(path, followlinks=False):
