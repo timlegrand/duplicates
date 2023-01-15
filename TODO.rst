@@ -1,7 +1,7 @@
 TODO List
 =========
 
-- [ ] create package
+- [x] create package
 - [x] add a CLI options parser
 - [x] add a --exclude option in CLI
 - [ ] create a Pytest testing suite and environment

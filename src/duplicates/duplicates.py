@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 
-from _version import __version_text__
+from duplicates._version import __version_text__
 
 
 @dataclass
@@ -184,7 +184,7 @@ def must_be_skipped(path, forbidden_expressions):
     return os.path.islink(path) or any(i in path for i in forbidden_expressions)
 
 
-if __name__ == "__main__":
+def _main():
     parser = argparse.ArgumentParser(description="Browse a directory tree and search for duplicates.")
     parser.add_argument('-e', '--exclude', nargs='+', default=[], help="list of expressions to exclude")
     parser.add_argument('-v', '--version', action='version', version=__version_text__)
