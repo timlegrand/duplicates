@@ -3,7 +3,7 @@ TODO List
 
 - [ ] create package
 - [x] add a CLI options parser
-- [ ] add a --exclude option in CLI
+- [x] add a --exclude option in CLI
 - [ ] create a Pytest testing suite and environment
 - [ ] create a testing data generator (no versioning of testing data)
 - [ ] make ``duplicates`` able to match *almost equivalents* directories::

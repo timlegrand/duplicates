@@ -180,8 +180,13 @@ def same_file_checksum(a, b):
         return False
 
 
+def must_be_skipped(path, forbidden_expressions):
+    return os.path.islink(path) or any(i in path for i in forbidden_expressions)
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="""Browse a directory tree and search for duplicates.""")
+    parser = argparse.ArgumentParser(description="Browse a directory tree and search for duplicates.")
+    parser.add_argument('-e', '--exclude', nargs='+', default=[], help="list of expressions to exclude")
     parser.add_argument('-v', '--version', action='version', version=__version_text__)
     options = parser.parse_args()
     logging.basicConfig(format="[%(levelname)s] %(message)s", level=logging.DEBUG)
@@ -189,13 +194,7 @@ if __name__ == "__main__":
     for root, dirs, files in os.walk(path, followlinks=False):
         for entry_name in dirs + files:
             entry_fullpath = os.path.join(root, entry_name)
-            if entry_name.startswith("."):
-                continue
-            if any(i in entry_fullpath for i in [".Spotlight", ".pyi", "Tim/dev/", "Films", "Musique", "Photos", "Jeux", "mi8", "Camera Roll"]):
-                continue  # For testing purposes only
-            if ".git/" in entry_fullpath:
-                continue
-            if os.path.islink(entry_fullpath):
+            if must_be_skipped(entry_fullpath, options.exclude):
                 continue
             if a := basename_already_recorded(entry_name):
                 if not os.path.isdir(a.fullpath) == os.path.isdir(entry_fullpath):
