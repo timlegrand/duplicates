@@ -3,10 +3,12 @@ TODO List
 
 - [x] create package
 - [x] update documentation according to the package model
-- [ ] refactor into dedicated modules
+- [x] refactor into dedicated modules
 - [x] add a CLI options parser
 - [x] add a --exclude option in CLI
+- [ ] add a --log-level option in CLI
 - [ ] create a Pytest testing suite and environment
+- [ ] create a Makefile to ease all tasks (test, build, publish, etc.)
 - [ ] create a testing data generator (no versioning of testing data)
 - [ ] make ``duplicates`` able to match *almost equivalents* directories::
 
